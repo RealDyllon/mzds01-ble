@@ -4,6 +4,8 @@ import json
 import enum
 import asyncio
 import argparse
+from time import sleep
+
 from binascii import hexlify
 from typing import Dict, Any, List, Callable, Optional
 
@@ -159,14 +161,41 @@ async def connect_ble(
                 pass
             logger.info("Pairing complete!")
 
+            # logger.info("sleeping for 10s")
+            # sleep(10)
+            # logger.info("waking up")
+
+            # NOTE: this light seems to require a time-sensitive handshake
+
             # Enable notifications on all notifiable characteristics
             logger.info("Enabling notifications...")
             for service in client.services:
                 for char in service.characteristics:
-                    if "notify" in char.properties:
+                    if "notify" in char.properties and char.uuid[0] != "0":
                         logger.info(f"Enabling notification on char {char.uuid}")
                         await client.start_notify(char, notification_handler)  # type: ignore
+                        # break
+
+                    if "write" in char.properties:
+                        logger.info(f"Writing to char {char.uuid}")
+                        await client.write_gatt_char(
+                            # "B02EAEAA-F6BC-4A7E-BC94-F7B7FC8DEDOB",
+                            char,
+                            bytearray([0xFE, 0x01, 0x00, 0x02, 0x50, 0x11]), response=True)
+                        await client.write_gatt_char(
+                            # "B02EAEAA-F6BC-4A7E-BC94-F7B7FC8DEDOB",
+                            char,
+                            bytearray([0xFE, 0x01, 0x00, 0x10, 0x50, 0x01, 0x32, 0x30, 0x32, 0x33, 0x30, 0x33]), response=True)
+
+                        # await client.read_gatt_char(char)
             logger.info("Done enabling notifications")
+
+            # enable write like iphone
+            # logger.info("Going to send a 2nd packet")
+            # for service in client.services:
+            #     for char in service.characteristics:
+            #
+            # logger.info("Finished sending a 2nd packet")
 
             return client
         except Exception as e:
@@ -212,16 +241,16 @@ async def main(identifier: Optional[str]) -> None:
     # find and connect to client
     client = await connect_ble(notification_handler, identifier)
 
-    logger.info("Client services:")
-    for service in client.services:
-        logger.info(f"{service.uuid} - ({len(service.characteristics)})")
+    # logger.info("Client services:")
+    # for service in client.services:
+    #     logger.info(f"{service.uuid} - ({len(service.characteristics)})")
 
     # get characteristics
     logger.info("Getting the device's settings...")
     event.clear()
     # await client.write_gatt_char(QUERY_REQ_UUID, bytearray([0x01, 0x12]), response=True)
-    await client.read_gatt_char("Reading is not permitted")
-    await event.wait()  # Wait to receive the notification response
+    # await client.read_gatt_char("Reading is not permitted")
+    # await event.wait()  # Wait to receive the notification response
     logger.info(f"Received settings\n: {response}")
 
     await client.disconnect()
