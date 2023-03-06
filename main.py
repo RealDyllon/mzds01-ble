@@ -5,6 +5,8 @@ import enum
 import asyncio
 import argparse
 from time import sleep
+from datetime import datetime
+
 
 from binascii import hexlify
 from typing import Dict, Any, List, Callable, Optional
@@ -168,7 +170,7 @@ async def connect_ble(
             # NOTE: this light seems to require a time-sensitive handshake
 
             # Enable notifications on all notifiable characteristics
-            logger.info("Enabling notifications...")
+            logger.info("Enabling notifications, reading and writing...")
             for service in client.services:
                 for char in service.characteristics:
                     if "notify" in char.properties and char.uuid[0] != "0":
@@ -185,9 +187,29 @@ async def connect_ble(
                         await client.write_gatt_char(
                             # "B02EAEAA-F6BC-4A7E-BC94-F7B7FC8DEDOB",
                             char,
-                            bytearray([0xFE, 0x01, 0x00, 0x10, 0x50, 0x01, 0x32, 0x30, 0x32, 0x33, 0x30, 0x33]), response=True)
+                            bytearray([0xFE, 0x01, 0x00, 0x02, 0x30, 0x04]), response=True)
 
-                        # await client.read_gatt_char(char)
+                        today = datetime.now()
+                        datetime_now_str = today.strftime("%Y%m%d%H%M%S")
+                        # logger.info(f"today's datetime: {datetime_now_str}")
+                        datetime_now_bytes = datetime_now_str.encode()
+                        payload = bytearray([0xFE, 0x01, 0x00, 0x10,
+                                       0x50, 0x01
+                                       # current date as byte YYYYMMDDHHMMSS
+                                       # 0x32, 0x30,
+                                       # 0x32, 0x33, 0x30, 0x33,
+                                       # 0x30, 0x36, 0x32, 0x32,
+                                       # 0x33, 0x39, 0x31, 0x30]
+                                      ]
+                                      )
+                        payload.extend(datetime_now_bytes)
+                        await client.write_gatt_char(
+                            # "B02EAEAA-F6BC-4A7E-BC94-F7B7FC8DEDOB",
+                            char, payload, response=True)
+
+                    if "read" in char.properties:
+                        logger.info(f"Reading from {char.uuid}")
+                        await client.read_gatt_char(char)
             logger.info("Done enabling notifications")
 
             # enable write like iphone
