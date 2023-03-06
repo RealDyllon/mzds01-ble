@@ -17,6 +17,8 @@ from bleak.backends.device import BLEDevice as BleakDevice
 
 from logger import logger
 
+from codes import codes
+
 
 class Response:
     def __init__(self) -> None:
@@ -236,14 +238,14 @@ async def connect_ble(
     raise Exception(f"Couldn't establish BLE connection after {RETRIES} retries")
 
 
-async def write_to_client(client: BleakClient, event: Event, data: bytes | bytearray | memoryview) -> None:
-    event.clear()
+async def write_to_client(client: BleakClient, event: Event, data: bytes | bytearray | memoryview, comment: None | str) -> None:
     for service in client.services:
         for char in service.characteristics:
             if "write" in char.properties:
-                logger.info(f"Writing to char {char.uuid} (turning off the led)")
+                logger.info(f"Writing to char {char.uuid} ({comment})")
+                event.clear()
                 await client.write_gatt_char(char, data, response=True)
-    await event.wait()
+                await event.wait()
 
 async def main(identifier: Optional[str]) -> None:
 
@@ -286,7 +288,11 @@ async def main(identifier: Optional[str]) -> None:
     #     logger.info(f"{service.uuid} - ({len(service.characteristics)})")
 
     event.clear()
-    await write_to_client(client, event, bytearray([0xFE, 0x01, 0x00, 0x03, 0x00, 0x01, 0x00]))
+    await write_to_client(client, event, codes["colors"]["OFF"], "Turning Off")
+    sleep(2)
+    await write_to_client(client, event, codes["colors"]["ON"], "Turning On")
+    sleep(2)
+    await write_to_client(client, event, codes["colors"]["OFF"], "Turning Off")
 
     # get characteristics
     logger.info("Getting the device's settings...")
