@@ -71,8 +71,9 @@ async def connect_ble(
                 for d in devices:
                     print(f"\tDiscovered: {d}")
                 # Now look for our matching device(s)
-                token = re.compile(r"GoPro [A-Z0-9]{4}" if identifier is None else f"GoPro {identifier}")
-                matched_devices = [device for name, device in devices.items() if token.match(name)]
+                # token = re.compile(r"GoPro [A-Z0-9]{4}" if identifier is None else f"GoPro {identifier}")`
+                address = "EC1FF10F-D43D-3B21-9D77-D6CBC851E5EC"
+                matched_devices = [device for name, device in devices.items() if name == address]
                 print(f"Found {len(matched_devices)} matching devices.")
 
             # Connect to first matching Bluetooth device

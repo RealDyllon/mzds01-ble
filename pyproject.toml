@@ -8,6 +8,7 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.10"
 bleak = "^0.19.5"
+pylint = "^2.16.3"
 
 
 [build-system]
