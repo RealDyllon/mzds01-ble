@@ -10,19 +10,18 @@ from typing import Dict, Any, List, Callable, Optional
 from bleak import BleakScanner, BleakClient
 from bleak.backends.device import BLEDevice as BleakDevice
 
-
-# from logging import logger
+from logger import logger
 
 
 def exception_handler(loop: asyncio.AbstractEventLoop, context: Dict[str, Any]) -> None:
     msg = context.get("exception", context["message"])
-    print(f"Caught exception {str(loop)}: {msg}")
-    print("This is unexpected and unrecoverable.")
+    logger.error(f"Caught exception {str(loop)}: {msg}")
+    logger.critical("This is unexpected and unrecoverable.")
 
 
 async def connect_ble(
-        notification_handler: Callable[[int, bytes], None],
-        identifier: Optional[str] = None,
+    notification_handler: Callable[[int, bytes], None],
+    identifier: Optional[str] = None,
 ) -> BleakClient:
     """Connect to a GoPro, then pair, and enable notifications
 
@@ -50,8 +49,7 @@ async def connect_ble(
             devices: Dict[str, BleakDevice] = {}
 
             # Scan for devices
-            print("Scanning for bluetooth devices...")
-
+            logger.info("Scanning for bluetooth devices...")
             # Scan callback to also catch nonconnectable scan responses
             # pylint: disable=cell-var-from-loop
             def _scan_callback(device: BleakDevice, _: Any) -> None:
@@ -69,7 +67,7 @@ async def connect_ble(
                         devices[device.address] = device
                 # Log every device we discovered
                 for d in devices:
-                    print(f"\tDiscovered: {d}")
+                    logger.info(f"\tDiscovered: {d}")
                 # Now look for our matching device(s)
                 # token = re.compile(r"GoPro [A-Z0-9]{4}" if identifier is None else f"GoPro {identifier}")`
                 address = "EC1FF10F-D43D-3B21-9D77-D6CBC851E5EC"
@@ -79,32 +77,33 @@ async def connect_ble(
             # Connect to first matching Bluetooth device
             device = matched_devices[0]
 
-            print(f"Establishing BLE connection to {device}...")
+            logger.info(f"Establishing BLE connection to {device}...")
             client = BleakClient(device)
             await client.connect(timeout=15)
-            print("BLE Connected!")
+            logger.info("BLE Connected!")
 
             # Try to pair (on some OS's this will expectedly fail)
-            print("Attempting to pair...")
+            logger.info("Attempting to pair...")
             try:
                 await client.pair()
             except NotImplementedError:
                 # This is expected on Mac
                 pass
-            print("Pairing complete!")
+            logger.info("Pairing complete!")
 
             # Enable notifications on all notifiable characteristics
-            print("Enabling notifications...")
+            logger.info("Enabling notifications...")
             for service in client.services:
                 for char in service.characteristics:
                     if "notify" in char.properties:
-                        print(f"Enabling notification on char {char.uuid}")
+                        logger.info(f"Enabling notification on char {char.uuid}")
                         await client.start_notify(char, notification_handler)  # type: ignore
-            print("Done enabling notifications")
+            logger.info("Done enabling notifications")
+
             return client
         except Exception as e:
-            print(f"Connection establishment failed: {e}")
-            print(f"Retrying #{retry}")
+            logger.error(f"Connection establishment failed: {e}")
+            logger.warning(f"Retrying #{retry}")
 
     raise Exception(f"Couldn't establish BLE connection after {RETRIES} retries")
 
@@ -135,7 +134,7 @@ if __name__ == "__main__":
     try:
         asyncio.run(main(args.identifier))
     except Exception as e:
-        print(e)
+        logger.error(e)
         sys.exit(-1)
     else:
         sys.exit(0)
