@@ -1,72 +1,141 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
+# ble_connect.py/Open GoPro, Version 2.0 (C) Copyright 2021 GoPro, Inc. (http://gopro.com/OpenGoPro).
+# This copyright was auto-generated on Wed, Sep  1, 2021  5:05:56 PM
 
+import re
+import sys
 import asyncio
-from typing import Optional
+import argparse
+from typing import Dict, Any, List, Callable, Optional
 
-from bleak import BleakClient, BleakScanner, BLEDevice
-from time import sleep
-
-# address = "14:7D:DA:16:CF:66"
-address = "EC1FF10F-D43D-3B21-9D77-D6CBC851E5EC"
-service_uuids = [
-    "fa879af4-d601-420c-b2b4-07ffb528dde3",
-    "0000ae00-0000-1000-8000-00805f9b34fb"
-]
-
-async def main(address: str):
-    """ Main program """
-    print("running")
-
-    stop_event = asyncio.Event()
-
-    # devices = await BleakScanner.discover()
-    #
-    # for d in devices:
-    #     print(d)
+from bleak import BleakScanner, BleakClient
+from bleak.backends.device import BLEDevice as BleakDevice
 
 
-
-    # pass
-
-    # def callback(device, advertising_data):
-    #     # TODO: do something with incoming data
-    #     pass
-
-    # async with BleakScanner(callback) as scanner:
-    #     # ...
-    #     # Important! Wait for an event to trigger stop, otherwise scanner
-    #     # will stop immediately.
-    #     # await stop_event.wait()
-    #     # await scanner.start()
-    #     # sleep(5)
-    #     # await scanner.stop()
-    #
-    #     # print(scanner.discovered_devices)
-    #
-    #     bledevice: Optional[BLEDevice] = await scanner.find("MZDS01")
-    #
-    #     print(bledevice.address)
-
-    # scanner stops when block exits
+# from logging import logger
 
 
+def exception_handler(loop: asyncio.AbstractEventLoop, context: Dict[str, Any]) -> None:
+    msg = context.get("exception", context["message"])
+    print(f"Caught exception {str(loop)}: {msg}")
+    print("This is unexpected and unrecoverable.")
 
-    async with BleakClient(address) as client:
-        print("connected to: " + client.address + " ")
-        print("services")
-        for s in client.services:
-            print(f"- {s.uuid}   {s.characteristics}   {s.handle} ")
+
+async def connect_ble(
+        notification_handler: Callable[[int, bytes], None],
+        identifier: Optional[str] = None,
+) -> BleakClient:
+    """Connect to a GoPro, then pair, and enable notifications
+
+    If identifier is None, the first discovered GoPro will be connected to.
+
+    Retry 10 times
+
+    Args:
+        notification_handler (Callable[[int, bytes], None]): callback when notification is received
+        identifier (str, optional): Last 4 digits of GoPro serial number. Defaults to None.
+
+    Raises:
+        Exception: couldn't establish connection after retrying 10 times
+
+    Returns:
+        BleakClient: connected client
+    """
+
+    asyncio.get_event_loop().set_exception_handler(exception_handler)
+
+    RETRIES = 10
+    for retry in range(RETRIES):
+        try:
+            # Map of discovered devices indexed by name
+            devices: Dict[str, BleakDevice] = {}
+
+            # Scan for devices
+            print("Scanning for bluetooth devices...")
+
+            # Scan callback to also catch nonconnectable scan responses
+            # pylint: disable=cell-var-from-loop
+            def _scan_callback(device: BleakDevice, _: Any) -> None:
+                # Add to the dict if not unknown
+                if device.name and device.name != "Unknown":
+                    devices[device.name] = device
+
+            # Scan until we find devices
+            matched_devices: List[BleakDevice] = []
+            while len(matched_devices) == 0:
+                # Now get list of connectable advertisements
+                for device in await BleakScanner.discover(timeout=5, detection_callback=_scan_callback):
+                    device: BleakDevice = device
+                    if True:  # device.name != "Unknown" and device.name is not None:
+                        devices[device.address] = device
+                # Log every device we discovered
+                for d in devices:
+                    print(f"\tDiscovered: {d}")
+                # Now look for our matching device(s)
+                # token = re.compile(r"GoPro [A-Z0-9]{4}" if identifier is None else f"GoPro {identifier}")`
+                address = "EC1FF10F-D43D-3B21-9D77-D6CBC851E5EC"
+                matched_devices = [device for name, device in devices.items() if name == address]
+                print(f"Found {len(matched_devices)} matching devices.")
+
+            # Connect to first matching Bluetooth device
+            device = matched_devices[0]
+
+            print(f"Establishing BLE connection to {device}...")
+            client = BleakClient(device)
+            await client.connect(timeout=15)
+            print("BLE Connected!")
+
+            # Try to pair (on some OS's this will expectedly fail)
+            print("Attempting to pair...")
             try:
-                for char in s.characteristics:
-                    if "notify" in char.properties:
-                        pass
-                        # await client.start_notify(char, notification_handler)
-                char = await client.read_gatt_char(s.uuid)
-                print("\nCharacteristic: {0}\n".format("".join(map(chr, char))))
-            except:
+                await client.pair()
+            except NotImplementedError:
+                # This is expected on Mac
                 pass
-    return 0
+            print("Pairing complete!")
+
+            # Enable notifications on all notifiable characteristics
+            print("Enabling notifications...")
+            for service in client.services:
+                for char in service.characteristics:
+                    if "notify" in char.properties:
+                        print(f"Enabling notification on char {char.uuid}")
+                        await client.start_notify(char, notification_handler)  # type: ignore
+            print("Done enabling notifications")
+            return client
+        except Exception as e:
+            print(f"Connection establishment failed: {e}")
+            print(f"Retrying #{retry}")
+
+    raise Exception(f"Couldn't establish BLE connection after {RETRIES} retries")
+
+
+async def main(identifier: Optional[str]) -> None:
+    def dummy_notification_handler(*_: Any) -> None:
+        ...
+    # find and connect to client
+    client = await connect_ble(dummy_notification_handler, identifier)
+
+    #
+
+    await client.disconnect()
+
 
 if __name__ == "__main__":
-    asyncio.run(main(address))
+    parser = argparse.ArgumentParser(description="Connect to a GoPro camera, pair, then enable notifications.")
+    parser.add_argument(
+        "-i",
+        "--identifier",
+        type=str,
+        help="Last 4 digits of GoPro serial number, which is the last 4 digits of the default camera SSID. \
+            If not used, first discovered GoPro will be connected to",
+        default=None,
+    )
+    args = parser.parse_args()
+
+    try:
+        asyncio.run(main(args.identifier))
+    except Exception as e:
+        print(e)
+        sys.exit(-1)
+    else:
+        sys.exit(0)
