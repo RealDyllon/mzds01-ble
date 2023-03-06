@@ -3,6 +3,7 @@ import sys
 import json
 import enum
 import asyncio
+from asyncio import Event
 import argparse
 from time import sleep
 from datetime import datetime
@@ -173,17 +174,19 @@ async def connect_ble(
             logger.info("Enabling notifications, reading and writing...")
             for service in client.services:
                 for char in service.characteristics:
+                    # logger.info(" ".join(char.properties))
                     if "notify" in char.properties and char.uuid[0] != "0":
                         logger.info(f"Enabling notification on char {char.uuid}")
                         await client.start_notify(char, notification_handler)  # type: ignore
                         # break
-
+                    sleep(0.1)
                     if "write" in char.properties:
                         logger.info(f"Writing to char {char.uuid}")
                         await client.write_gatt_char(
                             # "B02EAEAA-F6BC-4A7E-BC94-F7B7FC8DEDOB",
                             char,
                             bytearray([0xFE, 0x01, 0x00, 0x02, 0x50, 0x11]), response=True)
+                        sleep(0.1)
                         await client.write_gatt_char(
                             # "B02EAEAA-F6BC-4A7E-BC94-F7B7FC8DEDOB",
                             char,
@@ -212,6 +215,12 @@ async def connect_ble(
                         await client.read_gatt_char(char)
             logger.info("Done enabling notifications")
 
+            for service in client.services:
+                for char in service.characteristics:
+                    if "read" in char.properties:
+                        logger.info(f"Reading from {char.uuid}")
+                        await client.read_gatt_char(char)
+
             # enable write like iphone
             # logger.info("Going to send a 2nd packet")
             # for service in client.services:
@@ -226,6 +235,15 @@ async def connect_ble(
 
     raise Exception(f"Couldn't establish BLE connection after {RETRIES} retries")
 
+
+async def write_to_client(client: BleakClient, event: Event, data: bytes | bytearray | memoryview) -> None:
+    event.clear()
+    for service in client.services:
+        for char in service.characteristics:
+            if "write" in char.properties:
+                logger.info(f"Writing to char {char.uuid} (turning off the led)")
+                await client.write_gatt_char(char, data, response=True)
+    await event.wait()
 
 async def main(identifier: Optional[str]) -> None:
 
@@ -267,12 +285,17 @@ async def main(identifier: Optional[str]) -> None:
     # for service in client.services:
     #     logger.info(f"{service.uuid} - ({len(service.characteristics)})")
 
+    event.clear()
+    await write_to_client(client, event, bytearray([0xFE, 0x01, 0x00, 0x03, 0x00, 0x01, 0x00]))
+
     # get characteristics
     logger.info("Getting the device's settings...")
     event.clear()
     # await client.write_gatt_char(QUERY_REQ_UUID, bytearray([0x01, 0x12]), response=True)
     # await client.read_gatt_char("Reading is not permitted")
-    # await event.wait()  # Wait to receive the notification response
+    await event.wait()  # Wait to receive the notification response
+
+
     logger.info(f"Received settings\n: {response}")
 
     await client.disconnect()
