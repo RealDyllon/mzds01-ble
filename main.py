@@ -50,14 +50,20 @@ async def main(address: str):
 
     # scanner stops when block exits
 
+
+
     async with BleakClient(address) as client:
         print("connected to: " + client.address + " ")
         print("services")
         for s in client.services:
             print(f"- {s.uuid}   {s.characteristics}   {s.handle} ")
             try:
+                for char in s.characteristics:
+                    if "notify" in char.properties:
+                        pass
+                        # await client.start_notify(char, notification_handler)
                 char = await client.read_gatt_char(s.uuid)
-                print("Characteristic: {0}".format("".join(map(chr, char))))
+                print("\nCharacteristic: {0}\n".format("".join(map(chr, char))))
             except:
                 pass
     return 0
