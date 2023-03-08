@@ -1,7 +1,7 @@
 from binascii import hexlify
 
 from logger import logger
-from main import RESPONSE_UUID
+from codes import RESPONSE_UUID
 
 
 def notification_handler(response, client, event, handle: int, data: bytes) -> None:

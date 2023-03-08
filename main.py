@@ -3,18 +3,15 @@ import asyncio
 from asyncio import Event
 from time import sleep
 from datetime import datetime
-from typing import Dict, Any, List, Callable
+from binascii import hexlify
+from typing import Dict, Any, List, Callable, Optional
 from bleak import BleakScanner, BleakClient
 from bleak.backends.device import BLEDevice as BleakDevice
 
 from classes import Response
 from logger import logger
 from codes import codes
-from notification_handler import notification_handler
-
-BLUETOOTH_ADDRESS = "EC1FF10F-D43D-3B21-9D77-D6CBC851E5EC"
-RESPONSE_UUID = "fa879af4-d601-420c-b2b4-07ffb528dde3"  # QUERY_RSP_UUID
-
+from codes import BLUETOOTH_ADDRESS, RESPONSE_UUID
 
 def exception_handler(loop: asyncio.AbstractEventLoop, context: Dict[str, Any]) -> None:
     msg = context.get("exception", context["message"])
@@ -132,7 +129,7 @@ async def connect_ble(
     raise Exception(f"Couldn't establish BLE connection after {RETRIES} retries")
 
 
-async def write_to_client(client: BleakClient, event: Event, data: bytes | bytearray | memoryview, comment: None | str) -> None:
+async def write_to_client(client: BleakClient, event: Event, data: bytes | bytearray | memoryview, comment: Optional[str]) -> None:
     for service in client.services:
         for char in service.characteristics:
             if "write" in char.properties:
@@ -149,19 +146,52 @@ async def main() -> None:
     client: BleakClient
     response = Response()
 
+    def notification_handler(handle: int, data: bytes) -> None:
+        logger.info(f'Received response at {handle=}: {hexlify(data, ":")!r}')
+
+        response.accumulate(data)
+
+        if response.is_received:
+            response.parse()
+
+            # If this is the correct handle and the status is success, the command was a success
+            if client.services.characteristics[handle].uuid == RESPONSE_UUID and response.status == 0:
+                logger.info("Successfully received the response")
+            # Anything else is unexpected. This shouldn't happen
+            else:
+                logger.error("Unexpected response")
+
+            # Notify writer that procedure is complete
+            event.set()
+
+
     # find and connect to client
     client = await connect_ble(notification_handler)
 
 
     event.clear()
     # await write_to_client(client, event, codes["colors"]["OFF"], "Turning Off")
-    await write_to_client(client, event, codes["colors"]["ON"], "Turning On Warm White")
+    await write_to_client(client, event, codes["colors"]["ON"], "Turning On Light")
+    sleep(2)
+    await write_to_client(client, event, codes["colors"]["WWHITE"], "Warm white")
     sleep(2)
     await write_to_client(client, event, codes["colors"]["DBLUE"], "Dark Blue")
+    sleep(2)
+    new_brightness = codes["brightness"]["custom"].copy()
+    new_brightness.extend([0x10])
+    await write_to_client(client, event, new_brightness, "Set brightness to 0x10")
+    sleep(2)
+    new_brightness = codes["brightness"]["custom"].copy()
+    new_brightness.extend([0x64])
+    await write_to_client(client, event, new_brightness, "Set brightness to 0x64")
     sleep(2)
     await write_to_client(client, event, codes["colors"]["GREEN"], "Green")
     sleep(2)
     await write_to_client(client, event, codes["colors"]["LBLUE"], "Light Blue")
+    sleep(2)
+    yellow = codes["colors"]["BASE"].copy()
+    yellow.extend([0xFF, 0xFF, 0x00, 0x00]) # rgb then trailing 0x00
+    await write_to_client(client, event, yellow, "Yellow")
     sleep(2)
     await write_to_client(client, event, codes["colors"]["OFF"], "Turning Off")
 
