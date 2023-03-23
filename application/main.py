@@ -35,7 +35,7 @@ async def main():
             cont = Controller(client, True)
             root = tk.Tk()
             root.protocol("WM_DELETE_WINDOW", lambda: asyncio.gather(cont.quit()))
-            root.title('Ember Mug Controller')
+            root.title('LED Controller')
             gui = Application(cont, master=root)
             await cont.start_with_gui(gui)
         except Exception as e:

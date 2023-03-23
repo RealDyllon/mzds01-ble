@@ -143,7 +143,7 @@ class Controller:
             temp = '{}°F'.format(int(TemperatureConversion.c2f(self.setting_temperature)))
         notification.notify(title='Your Drink is Waiting For You!',
                             message='Your drink is waiting for you to drink!. It\'s nice and warm {}!'.format(temp),
-                            app_name='Ember Mug Controller')
+                            app_name='LED Controller')
 
     @ble_error_catch
     async def fetch_battery_state(self):

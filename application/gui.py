@@ -15,11 +15,11 @@ class Application(tk.Frame):
         super().__init__(master)
 
         self.master = master
-        self.master.overrideredirect(True)  # turns off title bar, geometry
+        # self.master.overrideredirect(True)  # turns off title bar, geometry
         screen_width = self.master.winfo_screenwidth()
         screen_height = self.master.winfo_screenheight()
         self.master.geometry('500x355+{}+{}'.format(screen_width - 500, screen_height - 335 - 100))
-        self.master.configure(bg=ORANGE)
+        # self.master.configure(bg=ORANGE)
         self.master.resizable(False, False)
         self.topmost = False  # only to know if root is minimized
 
@@ -78,28 +78,28 @@ class Application(tk.Frame):
             def release_window(event):  # runs when window is released
                 self.master.config(cursor="arrow")
 
-            self.title_bar.bind('<B1-Motion>', move_window)
-            self.title_bar.bind('<ButtonRelease-1>', release_window)
-            self.title_bar_title.bind('<B1-Motion>', move_window)
-            self.title_bar_title.bind('<ButtonRelease-1>', release_window)
+            # self.title_bar.bind('<B1-Motion>', move_window)
+            # self.title_bar.bind('<ButtonRelease-1>', release_window)
+            # self.title_bar_title.bind('<B1-Motion>', move_window)
+            # self.title_bar_title.bind('<ButtonRelease-1>', release_window)
 
-        self.title_bar = tk.Frame(self.master, bg=ORANGE, relief='flat', bd=0, highlightthickness=0)
-
-        self.close_button = tk.Button(self.title_bar, text='  ×  ', command=self.close, bg=ORANGE, padx=2, pady=2,
-                                 font=("calibri", 13), bd=0, fg='white', highlightthickness=0)
-        self.topmost_button = tk.Button(self.title_bar, text=' 📎 ', command=topmost, bg=ORANGE, padx=2, pady=2, bd=0,
-                                   fg='white', font=("calibri", 13), highlightthickness=0)
-        self.temperature_scale_button = tk.Button(self.title_bar,
-                                             text=' °C ' if self.controller.temperature_scale == TemperatureScale.Celsius else ' °F ',
-                                             command=temperature_scale, bg=ORANGE, padx=2, pady=2, bd=0,
-                                             fg='white', font=("calibri", 13), highlightthickness=0)
-        self.title_bar_title = tk.Label(self.title_bar, text='Ember Mug Controller', bg=ORANGE, bd=0, fg='white',
-                                   font=("helvetica", 10), highlightthickness=0)
-        self.title_bar.pack(fill='x')
-        self.close_button.pack(side='right', ipadx=7, ipady=1)
-        self.topmost_button.pack(side='right', ipadx=7, ipady=1)
-        self.temperature_scale_button.pack(side='right', ipadx=7, ipady=1)
-        self.title_bar_title.pack(side='left', padx=10)
+        # self.title_bar = tk.Frame(self.master, bg=ORANGE, relief='flat', bd=0, highlightthickness=0)
+        #
+        # self.close_button = tk.Button(self.title_bar, text='  ×  ', command=self.close, bg=ORANGE, padx=2, pady=2,
+        #                          font=("calibri", 13), bd=0, fg='white', highlightthickness=0)
+        # self.topmost_button = tk.Button(self.title_bar, text=' 📎 ', command=topmost, bg=ORANGE, padx=2, pady=2, bd=0,
+        #                            fg='white', font=("calibri", 13), highlightthickness=0)
+        # self.temperature_scale_button = tk.Button(self.title_bar,
+        #                                      text=' °C ' if self.controller.temperature_scale == TemperatureScale.Celsius else ' °F ',
+        #                                      command=temperature_scale, bg=ORANGE, padx=2, pady=2, bd=0,
+        #                                      fg='white', font=("calibri", 13), highlightthickness=0)
+        # self.title_bar_title = tk.Label(self.title_bar, text='MZDS01 BLE LED Controller', bg=ORANGE, bd=0, fg='white',
+        #                            font=("helvetica", 10), highlightthickness=0)
+        # self.title_bar.pack(fill='x')
+        # self.close_button.pack(side='right', ipadx=7, ipady=1)
+        # self.topmost_button.pack(side='right', ipadx=7, ipady=1)
+        # self.temperature_scale_button.pack(side='right', ipadx=7, ipady=1)
+        # self.title_bar_title.pack(side='left', padx=10)
 
         def changex_on_hovering(event):
             self.close_button['bg'] = 'red'
@@ -122,87 +122,90 @@ class Application(tk.Frame):
         def returns_size_on_hovering(event):
             self.temperature_scale_button['bg'] = ORANGE
 
-        self.title_bar.bind('<Button-1>', get_pos)  # so you can drag the window from the title bar
-        self.title_bar_title.bind('<Button-1>', get_pos)  # so you can drag the window from the title
+        # self.title_bar.bind('<Button-1>', get_pos)  # so you can drag the window from the title bar
+        # self.title_bar_title.bind('<Button-1>', get_pos)  # so you can drag the window from the title
 
         # button effects in the title bar when hovering over buttons
 
-        self.close_button.bind('<Enter>', changex_on_hovering)
-        self.close_button.bind('<Leave>', returnx_to_normalstate)
-        self.topmost_button.bind('<Enter>', changem_size_on_hovering)
-        self.topmost_button.bind('<Leave>', returnm_size_on_hovering)
-        self.temperature_scale_button.bind('<Enter>', changes_size_on_hovering)
-        self.temperature_scale_button.bind('<Leave>', returns_size_on_hovering)
+        # self.close_button.bind('<Enter>', changex_on_hovering)
+        # self.close_button.bind('<Leave>', returnx_to_normalstate)
+        # self.topmost_button.bind('<Enter>', changem_size_on_hovering)
+        # self.topmost_button.bind('<Leave>', returnm_size_on_hovering)
+        # self.temperature_scale_button.bind('<Enter>', changes_size_on_hovering)
+        # self.temperature_scale_button.bind('<Leave>', returns_size_on_hovering)
 
         # body
-        self.pixelVirtual = tk.PhotoImage(width=1, height=1)
+        # self.pixelVirtual = tk.PhotoImage(width=1, height=1)
 
         self.canvas = tk.Canvas(self.master, width=500, height=325, bd=-2)
         self.canvas.pack(expand=False)
 
-        self.battery = tk.StringVar()
-        self.temperature = tk.StringVar()
-        self.setting_temperature = tk.StringVar()
-        self.state = tk.StringVar()
+        # self.battery = tk.StringVar()
+        # self.temperature = tk.StringVar()
+        # self.setting_temperature = tk.StringVar()
+        # self.state = tk.StringVar()
 
-        self.battery_label = tk.Label(self.canvas, textvariable=self.battery, bg='white', fg=GRAY,
-                                      font=('Arial Black', 13), pady=0)
-        self.temperature_label = tk.Label(self.canvas, textvariable=self.temperature, bg=ORANGE, fg='white',
-                                          font=('Arial Black', 50))
-        self.setting_temperature_label = tk.Label(self.canvas, textvariable=self.setting_temperature, bg=ORANGE,
-                                                  fg='white', font=('Arial Black', 20))
-        self.state_label = tk.Label(self.canvas, textvariable=self.state, bg=ORANGE,
-                                    fg='white', font=('Arial Black', 20))
+        # self.battery_label = tk.Label(self.canvas, textvariable=self.battery, bg='white', fg=GRAY,
+        #                               font=('Arial Black', 13), pady=0)
+        # self.temperature_label = tk.Label(self.canvas, textvariable=self.temperature, bg=ORANGE, fg='white',
+        #                                   font=('Arial Black', 50))
+        # self.setting_temperature_label = tk.Label(self.canvas, textvariable=self.setting_temperature, bg=ORANGE,
+        #                                           fg='white', font=('Arial Black', 20))
+        # self.state_label = tk.Label(self.canvas, textvariable=self.state, bg=ORANGE,
+        #                             fg='white', font=('Arial Black', 20))
 
-        self.battery_label.place(x=115, y=295, anchor='center')
-        self.temperature_label.place(x=370, y=85, anchor="center")
-        self.setting_temperature_label.place(x=365, y=155, anchor="center")
-        self.state_label.place(x=360, y=195, anchor="center")
+        # self.battery_label.place(x=115, y=295, anchor='center')
+        # self.temperature_label.place(x=370, y=85, anchor="center")
+        # self.setting_temperature_label.place(x=365, y=155, anchor="center")
+        # self.state_label.place(x=360, y=195, anchor="center")
 
-        self.heat_img = ImageTk.PhotoImage(file='static/icon/heat.png')
-        self.heat_button = tk.Button(self.canvas, width=60,
-                                     height=65, command=self.change_setting_temperature(2),
-                                     borderwidth=0, relief='sunken')
-        self.heat_button.config(image=self.heat_img)
-        self.heat_button.place(x=420, y=230)
+        # self.heat_img = ImageTk.PhotoImage(file='static/icon/heat.png')
+        # self.heat_button = tk.Button(self.canvas, width=60,
+        #                              height=65, command=self.change_setting_temperature(2),
+        #                              borderwidth=0, relief='sunken')
+        # self.heat_button.config(image=self.heat_img)
+        # self.heat_button.place(x=420, y=230)
 
-        self.weak_heat_img = ImageTk.PhotoImage(file='static/icon/weak_heat.png')
-        self.weak_heat_button = tk.Button(self.canvas, width=43,
-                                          height=43, command=self.change_setting_temperature(0.5),
-                                          borderwidth=0, relief='sunken')
-        self.weak_heat_button.config(image=self.weak_heat_img)
-        self.weak_heat_button.place(x=377, y=243)
+        # self.weak_heat_img = ImageTk.PhotoImage(file='static/icon/weak_heat.png')
+        # self.weak_heat_button = tk.Button(self.canvas, width=43,
+        #                                   height=43, command=self.change_setting_temperature(0.5),
+        #                                   borderwidth=0, relief='sunken')
+        # self.weak_heat_button.config(image=self.weak_heat_img)
+        # self.weak_heat_button.place(x=377, y=243)
 
-        self.cool_img = ImageTk.PhotoImage(file='static/icon/cool.png')
-        self.cool_button = tk.Button(self.canvas, width=60,
-                                     height=70, command=self.change_setting_temperature(-2),
-                                     borderwidth=0, relief='sunken')
-        self.cool_button.config(image=self.cool_img)
-        self.cool_button.place(x=245, y=230)
+        # self.cool_img = ImageTk.PhotoImage(file='static/icon/cool.png')
+        # self.cool_button = tk.Button(self.canvas, width=60,
+        #                              height=70, command=self.change_setting_temperature(-2),
+        #                              borderwidth=0, relief='sunken')
+        # self.cool_button.config(image=self.cool_img)
+        # self.cool_button.place(x=245, y=230)
 
-        self.weak_cool_img = ImageTk.PhotoImage(file='static/icon/weak_cool.png')
-        self.weak_cool_button = tk.Button(self.canvas, width=43,
-                                          height=43, command=self.change_setting_temperature(-0.5),
-                                          borderwidth=0, relief='sunken')
-        self.weak_cool_button.config(image=self.weak_cool_img)
-        self.weak_cool_button.place(x=310, y=243)
+        # self.weak_cool_img = ImageTk.PhotoImage(file='static/icon/weak_cool.png')
+        # self.weak_cool_button = tk.Button(self.canvas, width=43,
+        #                                   height=43, command=self.change_setting_temperature(-0.5),
+        #                                   borderwidth=0, relief='sunken')
+        # self.weak_cool_button.config(image=self.weak_cool_img)
+        # self.weak_cool_button.place(x=310, y=243)
 
-        self.color_button = tk.Button(self.canvas, width=30, height=10, text='', borderwidth=0, relief='flat',
-                                      bg='#ff0000', command=self.pick_color, image=self.pixelVirtual)
-        self.color_button.place(x=96, y=218)
+        self.color_button = tk.Button(self.canvas,
+                                      # width=30, height=10,
+                                      text='change color', borderwidth=0,
+                                      relief='flat',
+                                      bg='#ff0000', command=self.pick_color)
+        self.color_button.place(x=0, y=0)
 
-        self.background = ImageTk.PhotoImage(file='static/background.png')
-        self.background_canvas = self.canvas.create_image(250, 162, image=self.background)
+        # self.background = ImageTk.PhotoImage(file='static/background.png')
+        # self.background_canvas = self.canvas.create_image(250, 162, image=self.background)
 
-        self.normal = ImageTk.PhotoImage(file='static/icon/normal.png')
-        self.charging = ImageTk.PhotoImage(file='static/icon/charging.png')
-        self.low = ImageTk.PhotoImage(file='static/icon/low.png')
-        self.battery_canvas = self.canvas.create_image(115, 265, image=self.normal)
+        # self.normal = ImageTk.PhotoImage(file='static/icon/normal.png')
+        # self.charging = ImageTk.PhotoImage(file='static/icon/charging.png')
+        # self.low = ImageTk.PhotoImage(file='static/icon/low.png')
+        # self.battery_canvas = self.canvas.create_image(115, 265, image=self.normal)
 
-        self.empty = ImageTk.PhotoImage(file='static/mug/empty.png')
-        self.heating = ImageTk.PhotoImage(file='static/mug/heating.png')
-        self.complete = ImageTk.PhotoImage(file='static/mug/complete.png')
-        self.mug_canvas = self.canvas.create_image(125, 135, image=self.empty)
+        # self.empty = ImageTk.PhotoImage(file='static/mug/empty.png')
+        # self.heating = ImageTk.PhotoImage(file='static/mug/heating.png')
+        # self.complete = ImageTk.PhotoImage(file='static/mug/complete.png')
+        # self.mug_canvas = self.canvas.create_image(125, 135, image=self.empty)
 
     def update_(self):
         if self.controller.battery is not None:
