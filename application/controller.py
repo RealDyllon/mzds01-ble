@@ -182,6 +182,17 @@ class Controller:
 
     @ble_error_catch
     async def set_color(self, color: Color):
+
+
+        # write to led
+        for service in self.client.services:
+            for char in service.characteristics:
+                if "write" in char.properties:
+                    logger.info(f"Writing to char {char.uuid} SET COLOR")
+                    # event.clear()
+                    data = codes["colors"]["LBLUE"]
+                    await self.client.write_gatt_char(char, data, response=True)
+
         await self.client.write_gatt_char(Request.LightColor.as_uuid, color.as_bytearray)
         self.color = color
 
@@ -205,12 +216,12 @@ class Controller:
             await asyncio.sleep(1)
 
     async def initial_fetch_values(self, run_updater=False):
-        await self.fetch_state()
+        # await self.fetch_state()
         await self.fetch_color()
-        await self.fetch_temperature_scale()
-        await self.fetch_setting_temperature()
-        await self.fetch_temperature()
-        await self.fetch_battery_state()
+        # await self.fetch_temperature_scale()
+        # await self.fetch_setting_temperature()
+        # await self.fetch_temperature()
+        # await self.fetch_battery_state()
 
         async def updater():
             while self.running and self.gui.alive:
