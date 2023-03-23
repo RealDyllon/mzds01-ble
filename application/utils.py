@@ -100,7 +100,12 @@ class Color:
 
     @property
     def as_bytearray(self) -> bytearray:
-        return bytearray([self.r, self.g, self.b, self.a])
+        print([self.r, self.g, self.b])
+        print(bytearray([self.r, self.g, self.b]))
+        # return bytearray([self.r, self.g, self.b, self.a])
+        return bytearray([0xFE, 0x01, 0x00, 0x06, 0x20, 0x01,
+                          self.r, self.g, self.b, 0x00
+                          ])
 
     @property
     def as_rgb(self) -> str:

@@ -183,6 +183,9 @@ class Controller:
     @ble_error_catch
     async def set_color(self, color: Color):
 
+        color_as_bytearray = color.as_bytearray
+        # logger.info(color_as_bytearray)
+        # logger.info(codes["colors"]["LBLUE"])
 
         # write to led
         for service in self.client.services:
@@ -191,9 +194,9 @@ class Controller:
                     logger.info(f"Writing to char {char.uuid} SET COLOR")
                     # event.clear()
                     data = codes["colors"]["LBLUE"]
-                    await self.client.write_gatt_char(char, data, response=True)
+                    await self.client.write_gatt_char(char, color_as_bytearray, response=True)
 
-        await self.client.write_gatt_char(Request.LightColor.as_uuid, color.as_bytearray)
+        # await self.client.write_gatt_char(Request.LightColor.as_uuid, color.as_bytearray)
         self.color = color
 
     @ble_error_catch
