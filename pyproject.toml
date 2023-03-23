@@ -10,6 +10,8 @@ python = "^3.10"
 bleak = "^0.19.5"
 pylint = "^2.16.3"
 rich = "^13.3.2"
+textual = {extras = ["dev"], version = "^0.15.1"}
+tk = "^0.1.0"
 
 
 [build-system]

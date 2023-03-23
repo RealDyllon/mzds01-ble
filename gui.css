@@ -1,0 +1,47 @@
+/* MAIN*/
+Screen {
+    layout: grid;
+    grid-size: 3 2;
+}
+
+#logs-container {
+    column-span: 3;
+}
+
+#textlog {
+    tint: magenta 10%;
+}
+
+/* LEFT COLUMN */
+#left-column {
+    height: 100%;
+    /*tint: magenta 40%;*/
+}
+
+#center-column {
+    height: 100%;
+}
+
+#right-column {
+    height: 100%;
+}
+
+
+/*SWITCH*/
+
+.container {
+    height: 30%;
+    width: auto;
+    tint: magenta 40%;
+}
+
+Switch {
+    height: auto;
+    width: auto;
+}
+
+.label {
+    height: 3;
+    content-align: center middle;
+    width: auto;
+}
