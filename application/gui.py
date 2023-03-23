@@ -4,6 +4,10 @@ from utils import Color, State, BatteryState, TemperatureScale, TemperatureConve
 
 from tkcolorpicker import askcolor
 
+import sys
+sys.path.append('..')
+from logger import logger
+
 ORANGE = '#ffba2e'
 DORANGE = '#b28220'
 GRAY = '#555555'
@@ -50,6 +54,23 @@ class Application(tk.Frame):
                                       relief='flat',
                                       bg='#ff0000', command=self.pick_color)
         self.color_button.place(x=2, y=2)
+
+        self.brightness_value = tk.DoubleVar()
+
+        self.brightness_slider = tk.Scale(self.canvas,
+                                          orient=tk.HORIZONTAL,
+                                           # from=0, to=100
+                                          variable=self.brightness_value,
+                                          )
+        self.brightness_slider.place(x=2, y=28)
+
+        self.brightness_button = tk.Button(self.canvas,
+                                          # width=30, height=10,
+                                          text='set brightness', borderwidth=0,
+                                          relief='flat',
+                                          bg='#ff0000', command=self.set_brightness)
+
+        self.brightness_button.place(x=30, y=30)
 
 
     def update_(self):
@@ -109,3 +130,9 @@ class Application(tk.Frame):
         if not color:
             return
         asyncio.gather(self.controller.set_color(Color(*color[0])))
+
+    def set_brightness(self):
+        brightness = self.brightness_value.get()
+        brightness = int(brightness)
+        logger.info(f"brightness_value: {brightness}")
+        asyncio.gather(self.controller.set_brightness(brightness))

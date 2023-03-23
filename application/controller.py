@@ -200,6 +200,20 @@ class Controller:
         self.color = color
 
     @ble_error_catch
+    async def set_brightness(self, brightness_value: int):
+        for service in self.client.services:
+            for char in service.characteristics:
+                if "write" in char.properties:
+                    logger.info(f"Writing to char {char.uuid} SET COLOR")
+                    # event.clear()
+                    brightness_bytes = bytearray([
+                        0xFE, 0x01, 0x00, 0x03, 0x10, 0x02,
+                        brightness_value])
+                    logger.info(brightness_bytes)
+                    await self.client.write_gatt_char(char, brightness_bytes, response=True)
+
+
+    @ble_error_catch
     async def fetch_temperature_scale(self):
         value = await self.client.read_gatt_char(Request.TemperatureScale.as_uuid)
         self.temperature_scale = TemperatureScale(value[0])
