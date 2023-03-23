@@ -1,20 +1,28 @@
+
+import sys
+sys.path.append('..')
+
 from utils import *
 import tkinter as tk
 import asyncio
 from bleak import discover, BleakClient
+from logger import logger
 from controller import Controller
 from gui import Application
 
 
 async def main():
     devices = await discover()
-    print("searching for devies...")
+    print("searching for devices...")
     for d in devices:
-        if EMBER_MANUFACTURER_CODE in d.metadata.get('manufacturer_data', {}):
-            user_input = input('Device {!r} found. Is this ember mug? Y/N [Y]: '.format(d.name)) or 'y'
-            if user_input.lower() == 'y':
-                ember = d
-                break
+        # logger.info(f"\tDiscovered: {d}")
+        print(d.address)
+        if d.address == LED_BLUETOOTH_ADDRESS:
+            print("device found, connecting...")
+            # user_input = input('Device {!r} found. Is this ember mug? Y/N [Y]: '.format(d.name)) or 'y'
+            # if user_input.lower() == 'y':
+            ember = d
+            break
     else:
         print('LED is not found. Exiting...')
         return

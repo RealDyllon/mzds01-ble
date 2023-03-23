@@ -8,7 +8,11 @@ from plyer import notification
 from functools import wraps
 from warnings import warn
 from utils import *
-
+import sys
+sys.path.append('..')
+from codes import codes
+from logger import logger
+from time import sleep
 
 def ble_error_catch(func):
     if asyncio.iscoroutinefunction(func):
@@ -66,9 +70,64 @@ class Controller:
 
         self.gui = frame
 
-        await self.client.start_notify(Request.Notification.as_uuid, self.notify_callback())
-        await self.client.write_gatt_char(Request.TemperatureScale.as_uuid,
-                                          await self.client.read_gatt_char(Request.TemperatureScale.as_uuid))
+        # await self.client.start_notify(Request.Notification.as_uuid, self.notify_callback()) #
+        # await self.client.write_gatt_char(Request.TemperatureScale.as_uuid,
+        #                                   await self.client.read_gatt_char(Request.TemperatureScale.as_uuid))
+
+        # Enable notifications on all notifiable characteristics
+        logger.info("Enabling notifications, reading and writing...")
+        for service in self.client.services:
+            for char in service.characteristics:
+                # logger.info(" ".join(char.properties))
+                if "notify" in char.properties and char.uuid[0] != "0":
+                    logger.info(f"Enabling notification on char {char.uuid}")
+                    await self.client.start_notify(char, self.notify_callback()) # notification_handler)  # type: ignore
+                    # break
+                sleep(0.1)
+                if "write" in char.properties:
+                    logger.info(f"Writing to char {char.uuid}")
+                    await self.client.write_gatt_char(
+                        # "B02EAEAA-F6BC-4A7E-BC94-F7B7FC8DEDOB",
+                        char,
+                        bytearray([0xFE, 0x01, 0x00, 0x02, 0x50, 0x11]), response=True)
+                    sleep(0.1)
+                    await self.client.write_gatt_char(
+                        # "B02EAEAA-F6BC-4A7E-BC94-F7B7FC8DEDOB",
+                        char,
+                        bytearray([0xFE, 0x01, 0x00, 0x02, 0x30, 0x04]), response=True)
+
+                    today = datetime.now()
+                    datetime_now_str = today.strftime("%Y%m%d%H%M%S")
+                    # logger.info(f"today's datetime: {datetime_now_str}")
+                    datetime_now_bytes = datetime_now_str.encode()
+                    payload = bytearray([0xFE, 0x01, 0x00, 0x10, 0x50, 0x01])
+                    payload.extend(datetime_now_bytes)
+                    await self.client.write_gatt_char(
+                        # "B02EAEAA-F6BC-4A7E-BC94-F7B7FC8DEDOB",
+                        char, payload, response=True)
+
+                if "read" in char.properties:
+                    logger.info(f"Reading from {char.uuid}")
+                    await self.client.read_gatt_char(char)
+            logger.info("Done enabling notifications")
+        logger.info("Done enabling notifications")
+
+        # setup reading - is this necessary???
+        for service in self.client.services:
+            for char in service.characteristics:
+                if "read" in char.properties:
+                    logger.info(f"Reading from {char.uuid}")
+                    await self.client.read_gatt_char(char)
+
+        # write to led
+        for service in self.client.services:
+            for char in service.characteristics:
+                if "write" in char.properties:
+                    logger.info(f"Writing to char {char.uuid} SET COLOR")
+                    # event.clear()
+                    data = codes["colors"]["GREEN"]
+                    await self.client.write_gatt_char(char, data, response=True)
+
 
         await asyncio.gather(self.set_schedule(), self.initial_fetch_values(True))
 
