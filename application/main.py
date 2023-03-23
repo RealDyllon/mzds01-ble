@@ -19,8 +19,6 @@ async def main():
         print(d.address)
         if d.address == LED_BLUETOOTH_ADDRESS:
             print("device found, connecting...")
-            # user_input = input('Device {!r} found. Is this ember mug? Y/N [Y]: '.format(d.name)) or 'y'
-            # if user_input.lower() == 'y':
             ember = d
             break
     else:

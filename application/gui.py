@@ -62,7 +62,7 @@ class Application(tk.Frame):
                                            # from=0, to=100
                                           variable=self.brightness_value,
                                           )
-        self.brightness_slider.place(x=2, y=28)
+        self.brightness_slider.place(x=2, y=30)
 
         self.brightness_button = tk.Button(self.canvas,
                                           # width=30, height=10,
@@ -70,7 +70,7 @@ class Application(tk.Frame):
                                           relief='flat',
                                           bg='#ff0000', command=self.set_brightness)
 
-        self.brightness_button.place(x=30, y=30)
+        self.brightness_button.place(x=110, y=50)
 
 
     def update_(self):
